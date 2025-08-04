@@ -274,6 +274,53 @@ body {
     font-size: 0.9em;
 }
 
+/* 选择题和判断题样式 */
+.question-options {
+    margin: 20px 0;
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    margin: 10px 0;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.option-item:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.option-item input[type="radio"] {
+    margin-right: 12px;
+    transform: scale(1.2);
+    accent-color: #667eea;
+}
+
+.option-item input[type="radio"]:checked + .option-text {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.option-item:has(input:checked) {
+    border-color: #667eea;
+    background: #f8f9ff;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.option-text {
+    font-size: 16px;
+    line-height: 1.5;
+    transition: color 0.3s ease;
+}
+
 .submit-btn {
     padding: 12px 30px;
     background: linear-gradient(135deg, #667eea, #764ba2);

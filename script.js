@@ -154,32 +154,102 @@ class AIInterviewer {
         document.getElementById('question-counter').textContent = `${this.currentQuestionIndex + 1}/${this.questions.length}`;
         document.getElementById('current-score').textContent = this.totalScore;
         
-        // 重置答案区域
-        document.getElementById('answer-input').value = '';
-        document.querySelector('.char-count').textContent = '0/500';
+        // 根据题目类型显示不同的答题界面
+        this.setupQuestionInterface(question);
+        
+        // 重置反馈区域
         document.getElementById('feedback-area').classList.add('hidden');
-        document.getElementById('answer-input').disabled = false;
-        document.getElementById('submit-answer').disabled = false;
+    }
+    
+    setupQuestionInterface(question) {
+        const answerArea = document.querySelector('.answer-area');
+        
+        if (question.type === 'choice') {
+            // 选择题界面
+            answerArea.innerHTML = `
+                <div class="question-options">
+                    ${question.options.map((option, index) => `
+                        <label class="option-item">
+                            <input type="radio" name="answer" value="${option.charAt(0)}">
+                            <span class="option-text">${option}</span>
+                        </label>
+                    `).join('')}
+                </div>
+                <button id="submit-answer" class="submit-btn">提交答案</button>
+            `;
+        } else if (question.type === 'judge') {
+            // 判断题界面
+            answerArea.innerHTML = `
+                <div class="question-options">
+                    <label class="option-item">
+                        <input type="radio" name="answer" value="true">
+                        <span class="option-text">✓ 正确</span>
+                    </label>
+                    <label class="option-item">
+                        <input type="radio" name="answer" value="false">
+                        <span class="option-text">✗ 错误</span>
+                    </label>
+                </div>
+                <button id="submit-answer" class="submit-btn">提交答案</button>
+            `;
+        } else {
+            // 问答题界面
+            answerArea.innerHTML = `
+                <textarea id="answer-input" placeholder="请输入你的回答..." maxlength="500"></textarea>
+                <div class="char-count">0/500</div>
+                <button id="submit-answer" class="submit-btn">提交答案</button>
+            `;
+            
+            // 重新绑定字数统计事件
+            document.getElementById('answer-input').addEventListener('input', (e) => {
+                const charCount = e.target.value.length;
+                document.querySelector('.char-count').textContent = `${charCount}/500`;
+            });
+        }
+        
+        // 重新绑定提交事件
+        document.getElementById('submit-answer').addEventListener('click', () => {
+            this.submitAnswer();
+        });
     }
     
     submitAnswer() {
-        const answer = document.getElementById('answer-input').value.trim();
-        if (!answer) {
-            this.showError('请输入你的回答！');
-            return;
+        const question = this.questions[this.currentQuestionIndex];
+        let answer;
+        
+        if (question.type === 'choice' || question.type === 'judge') {
+            // 获取选择题或判断题答案
+            const selectedOption = document.querySelector('input[name="answer"]:checked');
+            if (!selectedOption) {
+                this.showError('请选择一个答案！');
+                return;
+            }
+            answer = selectedOption.value;
+        } else {
+            // 获取问答题答案
+            const answerInput = document.getElementById('answer-input');
+            if (!answerInput) {
+                this.showError('答案输入框未找到！');
+                return;
+            }
+            answer = answerInput.value.trim();
+            if (!answer) {
+                this.showError('请输入你的回答！');
+                return;
+            }
         }
         
-        // 禁用输入
-        document.getElementById('answer-input').disabled = true;
+        // 禁用提交按钮
         document.getElementById('submit-answer').disabled = true;
         
         // 评分
-        const result = this.evaluateAnswer(answer);
+        const result = this.evaluateAnswer(answer, question);
         this.answers.push({
-            question: this.questions[this.currentQuestionIndex].question,
+            question: question.question,
             answer: answer,
             score: result.score,
-            feedback: result.feedback
+            feedback: result.feedback,
+            type: question.type
         });
         
         this.totalScore += result.score;
@@ -188,54 +258,94 @@ class AIInterviewer {
         this.showFeedback(result);
     }
     
-    evaluateAnswer(answer) {
-        const question = this.questions[this.currentQuestionIndex];
+    evaluateAnswer(answer, question) {
         let score = 0;
-        let matchedKeywords = [];
-        let penalties = [];
-        
-        // 检查关键词
-        question.keywords.forEach(keyword => {
-            if (answer.toLowerCase().includes(keyword.word.toLowerCase())) {
-                score += keyword.score;
-                matchedKeywords.push(keyword.word);
-            }
-        });
-        
-        // 检查扣分项
-        question.penalties.forEach(penalty => {
-            if (answer.toLowerCase().includes(penalty.word.toLowerCase())) {
-                score += penalty.score; // penalty.score是负数
-                penalties.push(penalty.word);
-            }
-        });
-        
-        // 确保分数在合理范围内
-        score = Math.max(0, Math.min(20, score));
-        
-        // 根据分数选择评语
         let feedback;
         let level;
-        if (score >= 15) {
-            level = 'excellent';
-            feedback = question.hrComments.excellent[Math.floor(Math.random() * question.hrComments.excellent.length)];
-        } else if (score >= 8) {
-            level = 'good';
-            feedback = question.hrComments.good[Math.floor(Math.random() * question.hrComments.good.length)];
+        let isCorrect = false;
+        
+        if (question.type === 'choice') {
+            // 选择题评分
+            isCorrect = answer === question.correctAnswer;
+            score = isCorrect ? 20 : 0;
+            
+            if (isCorrect) {
+                level = 'correct';
+                feedback = question.hrComments.correct[Math.floor(Math.random() * question.hrComments.correct.length)];
+            } else {
+                level = 'wrong';
+                feedback = question.hrComments.wrong[Math.floor(Math.random() * question.hrComments.wrong.length)];
+            }
+            
+        } else if (question.type === 'judge') {
+            // 判断题评分
+            const userAnswer = answer === 'true';
+            isCorrect = userAnswer === question.correctAnswer;
+            score = isCorrect ? 20 : 0;
+            
+            if (isCorrect) {
+                level = 'correct';
+                feedback = question.hrComments.correct[Math.floor(Math.random() * question.hrComments.correct.length)];
+            } else {
+                level = 'wrong';
+                feedback = question.hrComments.wrong[Math.floor(Math.random() * question.hrComments.wrong.length)];
+            }
+            
         } else {
-            level = 'poor';
-            feedback = question.hrComments.poor[Math.floor(Math.random() * question.hrComments.poor.length)];
+            // 问答题评分（原有逻辑）
+            let matchedKeywords = [];
+            let penalties = [];
+            
+            // 检查关键词
+            if (question.keywords) {
+                question.keywords.forEach(keyword => {
+                    if (answer.toLowerCase().includes(keyword.word.toLowerCase())) {
+                        score += keyword.score;
+                        matchedKeywords.push(keyword.word);
+                    }
+                });
+            }
+            
+            // 检查扣分项
+            if (question.penalties) {
+                question.penalties.forEach(penalty => {
+                    if (answer.toLowerCase().includes(penalty.word.toLowerCase())) {
+                        score += penalty.score; // penalty.score是负数
+                        penalties.push(penalty.word);
+                    }
+                });
+            }
+            
+            // 确保分数在合理范围内
+            score = Math.max(0, Math.min(20, score));
+            
+            // 根据分数选择评语
+            if (score >= 15) {
+                level = 'excellent';
+                feedback = question.hrComments.excellent[Math.floor(Math.random() * question.hrComments.excellent.length)];
+            } else if (score >= 8) {
+                level = 'good';
+                feedback = question.hrComments.good[Math.floor(Math.random() * question.hrComments.good.length)];
+            } else {
+                level = 'poor';
+                feedback = question.hrComments.poor[Math.floor(Math.random() * question.hrComments.poor.length)];
+            }
         }
         
         // 根据HR风格调整评语
         feedback = this.adjustFeedbackByHRStyle(feedback, level);
         
+        // 为选择题和判断题添加解释
+        if ((question.type === 'choice' || question.type === 'judge') && question.explanation) {
+            feedback += `\n\n💡 解析：${question.explanation}`;
+        }
+        
         return {
             score: score,
             feedback: feedback,
             level: level,
-            matchedKeywords: matchedKeywords,
-            penalties: penalties
+            isCorrect: isCorrect,
+            type: question.type
         };
     }
     
