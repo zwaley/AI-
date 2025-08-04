@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI面试官 - 科技行业面试模拟游戏</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 开始页面 -->
+        <div id="start-screen" class="screen active">
+            <div class="header">
+                <h1>🤖 AI面试官</h1>
+                <p class="subtitle">科技行业面试模拟游戏</p>
+            </div>
+            
+            <div class="job-selection">
+                <h2>选择你要应聘的岗位：</h2>
+                <div class="job-cards">
+                    <div class="job-card" data-job="algorithm">
+                        <h3>🧠 算法工程师</h3>
+                        <p>机器学习、深度学习算法开发</p>
+                    </div>
+                    <div class="job-card" data-job="data-scientist">
+                        <h3>📊 数据科学家</h3>
+                        <p>数据分析、建模与业务洞察</p>
+                    </div>
+                    <div class="job-card" data-job="ai-engineer">
+                        <h3>⚙️ AI工程师</h3>
+                        <p>AI系统架构与工程实现</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="difficulty-selection">
+                <h2>选择难度等级：</h2>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn" data-level="junior">初级 👶</button>
+                    <button class="difficulty-btn" data-level="mid">中级 🧑‍💼</button>
+                    <button class="difficulty-btn" data-level="senior">高级 🎯</button>
+                </div>
+            </div>
+            
+            <button id="start-interview" class="start-btn" disabled>开始面试</button>
+        </div>
+        
+        <!-- 面试页面 -->
+        <div id="interview-screen" class="screen">
+            <div class="interview-header">
+                <div class="hr-info">
+                    <div class="hr-avatar">👩‍💼</div>
+                    <div class="hr-details">
+                        <h3 id="hr-name">HR小王</h3>
+                        <p id="hr-mood">今天心情不错</p>
+                    </div>
+                </div>
+                <div class="progress-info">
+                    <span id="question-counter">1/5</span>
+                    <div class="score">得分: <span id="current-score">0</span></div>
+                </div>
+            </div>
+            
+            <div class="question-area">
+                <div class="hr-speech-bubble">
+                    <p id="question-text">正在准备问题...</p>
+                </div>
+            </div>
+            
+            <div class="answer-area">
+                <textarea id="answer-input" placeholder="请输入你的回答..." maxlength="500"></textarea>
+                <div class="answer-controls">
+                    <span class="char-count">0/500</span>
+                    <button id="submit-answer" class="submit-btn">提交回答</button>
+                </div>
+            </div>
+            
+            <div id="feedback-area" class="feedback-area hidden">
+                <div class="hr-feedback">
+                    <p id="feedback-text"></p>
+                    <div class="score-change">
+                        <span id="score-change"></span>
+                    </div>
+                </div>
+                <button id="next-question" class="next-btn">下一题</button>
+            </div>
+        </div>
+        
+        <!-- 结果页面 -->
+        <div id="result-screen" class="screen">
+            <div class="result-header">
+                <h1 id="result-title">面试结束</h1>
+                <div class="final-score">
+                    <span class="score-label">最终得分</span>
+                    <span id="final-score" class="score-value">0</span>
+                    <span class="score-total">/100</span>
+                </div>
+            </div>
+            
+            <div class="result-content">
+                <div id="result-message" class="result-message"></div>
+                <div id="result-advice" class="result-advice"></div>
+            </div>
+            
+            <div class="result-actions">
+                <button id="restart-game" class="restart-btn">重新开始</button>
+                <button id="share-result" class="share-btn">分享成绩</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="questions.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
