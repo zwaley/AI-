@@ -34,7 +34,7 @@ class AIInterviewer {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
-                this.currentLevel = btn.dataset.level;
+                this.currentLevel = btn.dataset.difficulty;
                 this.updateStartButton();
             });
         });
@@ -106,14 +106,20 @@ class AIInterviewer {
     startInterview() {
         // 随机选择HR
         this.currentHR = HR_PROFILES[Math.floor(Math.random() * HR_PROFILES.length)];
-        
+
         // 获取题目
         this.questions = this.getQuestions();
+
+        // 如果没有获取到题目，则不继续
+        if (this.questions.length === 0) {
+            return;
+        }
+
         this.currentQuestionIndex = 0;
         this.totalScore = 0;
         this.maxScore = this.questions.length * 20; // 每题最高20分
         this.answers = [];
-        
+
         // 显示面试界面
         this.showInterviewScreen();
         this.updateHRInfo();
@@ -121,7 +127,31 @@ class AIInterviewer {
     }
     
     getQuestions() {
-        const jobQuestions = QUESTIONS_DB[this.currentJob][this.currentLevel];
+        const mappedJobKey = this.currentJob;
+
+        const levelKeyMap = {
+            'easy': 'junior',
+            'medium': 'mid',
+            'hard': 'senior'
+        };
+        const mappedLevelKey = levelKeyMap[this.currentLevel] || this.currentLevel;
+
+        const jobData = QUESTIONS_DB[mappedJobKey];
+
+        if (!jobData) {
+            this.showError(`未找到岗位 ${this.currentJob} 的题库。`);
+            this.restartGame();
+            return [];
+        }
+
+        const jobQuestions = jobData[mappedLevelKey];
+
+        if (!jobQuestions || jobQuestions.length === 0) {
+            this.showError(`未找到 ${this.currentJob} (${this.currentLevel}) 的题目。`);
+            this.restartGame();
+            return [];
+        }
+
         // 随机选择5道题
         const shuffled = [...jobQuestions].sort(() => 0.5 - Math.random());
         return shuffled.slice(0, Math.min(5, shuffled.length));
@@ -163,7 +193,8 @@ class AIInterviewer {
     
     setupQuestionInterface(question) {
         const answerArea = document.querySelector('.answer-area');
-        
+        answerArea.innerHTML = ''; // 先清空
+
         if (question.type === 'choice') {
             // 选择题界面
             answerArea.innerHTML = `
@@ -228,11 +259,7 @@ class AIInterviewer {
         } else {
             // 获取问答题答案
             const answerInput = document.getElementById('answer-input');
-            if (!answerInput) {
-                this.showError('答案输入框未找到！');
-                return;
-            }
-            answer = answerInput.value.trim();
+            answer = answerInput ? answerInput.value.trim() : ''; // 如果输入框不存在，则答案为空
             if (!answer) {
                 this.showError('请输入你的回答！');
                 return;
